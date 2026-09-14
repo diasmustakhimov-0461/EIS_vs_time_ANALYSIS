@@ -224,7 +224,17 @@ def calculate_bic(residual, number_of_parameters):
 # 7. READ DATA
 # ============================================================
 
-df = pd.read_csv(DATA_FILE)
+# The CSV file uses semicolons as separators.
+df = pd.read_csv(DATA_FILE, sep=";")
+
+# Rename the original column names to simpler names.
+df = df.rename(columns={
+    "Time of immersion (hours)": "immersion_time",
+    "Frequency (Hz)": "frequency",
+    "Zre (ohms)": "Zreal",
+    "Zim (ohms)": "Zimag",
+    "Sample": "sample"
+})
 
 required_columns = [
     "immersion_time",
@@ -239,14 +249,26 @@ for column in required_columns:
             f"Missing required column: {column}"
         )
 
+# Convert numerical columns to numbers.
+for column in required_columns:
+    df[column] = pd.to_numeric(
+        df[column],
+        errors="coerce"
+    )
+
+# Remove rows with missing numerical values.
 df = df.dropna(subset=required_columns)
 
+# Sort by immersion time and frequency.
 df = df.sort_values(
     ["immersion_time", "frequency"],
     ascending=[True, False]
 )
 
-
+print("\nData successfully loaded.")
+print("Columns:", list(df.columns))
+print("Immersion times:", sorted(df["immersion_time"].unique()))
+print("Number of data points:", len(df))
 # ============================================================
 # 8. FIT EACH IMMERSION TIME
 # ============================================================
